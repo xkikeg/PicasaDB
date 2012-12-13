@@ -5,8 +5,9 @@ import Data.PMPDB
 import Data.Word
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Binary.Get as G
--- import Data.Binary.IEEE754
--- import Data.Time
+import Data.Binary.IEEE754
+import Data.Time
+import Data.Time.Clock.POSIX
 
 
 getConditional :: (Show a) => (G.Get a) -> (a -> Bool) -> G.Get a
@@ -18,6 +19,12 @@ getConditional parser cond = do
 -- TODO: incorrect CSV parsing for string containing ',' itself
 getCSV :: G.Get [BL.ByteString]
 getCSV = G.getLazyByteStringNul >>= return . BL.split 0x2c
+
+
+getVariantTime :: G.Get UTCTime
+getVariantTime = do
+  x <- getFloat64le
+  return $ posixSecondsToUTCTime (realToFrac $ (x - 25569) * 86400)
 
 
 parseList :: (G.Get a) -> Int -> G.Get [a]
@@ -42,7 +49,7 @@ parsePMPDB = do
   case fieldType of
     0x0 -> retP PMPString     G.getLazyByteStringNul
     0x1 -> retP PMPWord32     G.getWord32le
-    0x2 -> fail "not implemented yet" -- retP PMPDateTime   getVariantTime
+    0x2 -> retP PMPDateTime   getVariantTime
     0x3 -> retP PMPWord8      G.getWord8
     0x4 -> retP PMPWord64     G.getWord64le
     0x5 -> retP PMPWord16     G.getWord16le
