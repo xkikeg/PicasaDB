@@ -1,4 +1,4 @@
-module Data.PMPDB where
+module Data.PicasaDB where
 
 
 import Data.Word

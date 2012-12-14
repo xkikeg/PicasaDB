@@ -1,7 +1,7 @@
-module Data.PMPDB.Reader where
+module Data.PicasaDB.Reader where
 
 
-import Data.PMPDB
+import Data.PicasaDB
 import Data.Word
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Binary.Get as G

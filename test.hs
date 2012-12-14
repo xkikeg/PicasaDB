@@ -1,6 +1,6 @@
 import Control.Monad ((>=>))
-import Data.PMPDB
-import Data.PMPDB.Reader
+import Data.PicasaDB
+import Data.PicasaDB.Reader
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Binary.Get as G
 import System.Environment (getArgs)
