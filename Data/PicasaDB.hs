@@ -14,3 +14,12 @@ data PMPDB = PMPString     [TL.Text]
            | PMPStringList [[TL.Text]]
            | PMPDateTime   [UTCTime]
            deriving (Show)
+
+listPMPDB :: PMPDB -> IO ()
+listPMPDB (PMPString     xs) = mapM_ (putStrLn . TL.unpack) xs
+listPMPDB (PMPWord8      xs) = mapM_ (putStrLn . show) xs
+listPMPDB (PMPWord16     xs) = mapM_ (putStrLn . show) xs
+listPMPDB (PMPWord32     xs) = mapM_ (putStrLn . show) xs
+listPMPDB (PMPWord64     xs) = mapM_ (putStrLn . show) xs
+listPMPDB (PMPStringList xs) = (putStr . TL.unpack . TL.unlines . map TL.unwords) xs
+listPMPDB (PMPDateTime   xs) = mapM_ (putStrLn . show) xs

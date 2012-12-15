@@ -10,4 +10,4 @@ readPMPDBFile = return . G.runGet parsePMPDB <=< BL.readFile
 
 main = do
   args <- getArgs
-  mapM_ (readPMPDBFile >=> print) args
+  mapM_ (readPMPDBFile >=> listPMPDB) args
