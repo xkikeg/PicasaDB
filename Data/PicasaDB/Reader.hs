@@ -2,10 +2,15 @@ module Data.PicasaDB.Reader where
 
 
 import Data.PicasaDB
+
 import Data.Word
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.Binary.Get as G
+import Data.CSV.Conduit
+import qualified Data.CSV.Conduit.Parser.Text as CSVT
 import Data.Binary.IEEE754
+import qualified Data.Binary.Get as G
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Encoding as E
 import Data.Time
 import Data.Time.Clock.POSIX
 
@@ -16,9 +21,18 @@ getConditional parser cond = do
   if cond x then return x else fail ("Unmet condition: " ++ show x)
 
 
--- TODO: incorrect CSV parsing for string containing ',' itself
-getCSV :: G.Get [BL.ByteString]
-getCSV = G.getLazyByteStringNul >>= return . BL.split 0x2c
+getUtf8LazyTextNul :: G.Get TL.Text
+getUtf8LazyTextNul = G.getLazyByteStringNul >>= return . E.decodeUtf8
+
+
+getCSV :: G.Get [TL.Text]
+getCSV = do
+  str <- return . TL.toStrict =<< getUtf8LazyTextNul
+  let x = CSVT.parseRow defCSVSettings str
+  case x of
+    Left  err        -> fail err
+    Right Nothing    -> return []
+    Right (Just res) -> return $ map TL.fromStrict res
 
 
 getVariantTime :: G.Get UTCTime
@@ -47,7 +61,7 @@ parsePMPDB = do
   let getL = flip parseList fieldLength
       retP = \x y -> getL y >>= return . x
   case fieldType of
-    0x0 -> retP PMPString     G.getLazyByteStringNul
+    0x0 -> retP PMPString     getUtf8LazyTextNul
     0x1 -> retP PMPWord32     G.getWord32le
     0x2 -> retP PMPDateTime   getVariantTime
     0x3 -> retP PMPWord8      G.getWord8
