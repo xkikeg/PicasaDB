@@ -6,5 +6,5 @@ TGT := $(basename $(SRC))
 
 all: $(TGT)
 
-%: %.hs
+%: %.hs Data/PicasaDB.hs Data/PicasaDB/Reader.hs
 	$(GHC) $(GHCFLAGS) -o $@ $<
