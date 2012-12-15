@@ -5,7 +5,7 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.Binary.Get as G
 import System.Environment (getArgs)
 
-readPMPDBFile :: FilePath -> IO (PMPDB)
+readPMPDBFile :: FilePath -> IO PMPDB
 readPMPDBFile = return . G.runGet parsePMPDB <=< BL.readFile
 
 main = do
