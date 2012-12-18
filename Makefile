@@ -1,7 +1,7 @@
 GHC := ghc
 GHCFLAGS := --make -O2
 
-SRC := test.hs
+SRC := test.hs thumbIndex.hs
 TGT := $(basename $(SRC))
 
 all: $(TGT)
