@@ -41,16 +41,16 @@ getVariantTime = do
   return $ posixSecondsToUTCTime (realToFrac $ (x - 25569) * 86400)
 
 
-parseList :: (G.Get a) -> Int -> G.Get [a]
-parseList f n | n == 0    = return []
-              | otherwise = do
+getList :: (G.Get a) -> Int -> G.Get [a]
+getList f n | n == 0    = return []
+            | otherwise = do
   x  <- f
-  xs <- parseList f (n - 1)
+  xs <- getList f (n - 1)
   return (x : xs)
 
 
-parsePMPDB :: G.Get PMPDB
-parsePMPDB = do
+getPMPDB :: G.Get PMPDB
+getPMPDB = do
   magic       <- getConditional G.getWord32le (== 0x3fcccccd)
   fieldType   <- getConditional G.getWord16le (<  0x8)
   constant1   <- getConditional G.getWord16le (== 0x1332)
@@ -58,7 +58,7 @@ parsePMPDB = do
   fieldType'  <- getConditional G.getWord16le (== fieldType)
   constant3   <- getConditional G.getWord16le (== 0x1332)
   fieldLength <- G.getWord32le >>= return . fromIntegral
-  let getL = flip parseList fieldLength
+  let getL = flip getList fieldLength
       retP = \x y -> getL y >>= return . x
   case fieldType of
     0x0 -> retP PMPString     getUtf8LazyTextNul

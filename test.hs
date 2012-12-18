@@ -6,7 +6,7 @@ import qualified Data.Binary.Get as G
 import System.Environment (getArgs)
 
 readPMPDBFile :: FilePath -> IO PMPDB
-readPMPDBFile = return . G.runGet parsePMPDB <=< BL.readFile
+readPMPDBFile = return . G.runGet getPMPDB <=< BL.readFile
 
 main = do
   args <- getArgs
