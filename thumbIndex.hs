@@ -33,12 +33,10 @@ getListUntil f = do
       return . (x :) =<< getListUntil f
 
 
-getHeader :: G.Get BL.ByteString
-getHeader = G.getLazyByteString 8
-
-
-skipHeader :: G.Get ()
-skipHeader = G.skip 8
+getHeader :: G.Get Int
+getHeader = ensureMagic >> G.getWord32le >>= return . fromIntegral
+  where
+    ensureMagic = getConditional G.getWord32be (== 0x66664640)
 
 
 getEntry :: G.Get (String, String)
@@ -49,7 +47,7 @@ getEntry = do
 
 
 readThumbsIndex :: FilePath -> IO [(String, String)]
-readThumbsIndex = return . G.runGet (skipHeader >> getListUntil getEntry) <=< BL.readFile
+readThumbsIndex = return . G.runGet (getHeader >> getListUntil getEntry) <=< BL.readFile
 
 
 main = do
