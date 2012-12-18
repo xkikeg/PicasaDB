@@ -39,19 +39,27 @@ getHeader = ensureMagic >> G.getWord32le >>= return . fromIntegral
     ensureMagic = getConditional G.getWord32be (== 0x66664640)
 
 
-getEntry :: G.Get (String, String)
+type Entry = (String, String, String, String, Int, Int)
+
+
+getEntry :: G.Get Entry
 getEntry = do
   path <- return . TL.unpack =<< getUtf8LazyTextNul
-  info <- return . hexDump =<< G.getLazyByteString 30
-  return (path, info)
+  b64x <- return . hexDump =<< G.getLazyByteString 8
+  b64y <- return . hexDump =<< G.getLazyByteString 8
+  info <- return . hexDump =<< G.getLazyByteString 9
+  valid <- getConditional (G.getWord8) (\x -> x == 0 || x == 1)
+  idir <- return . fromIntegral =<< G.getWord32le
+  if valid == 0 && idir /= -1 then fail "invalid with valid idir"
+    else return (path, b64x, b64y, info, fromIntegral valid, idir)
 
 
-readThumbsIndex :: FilePath -> IO [(String, String)]
+readThumbsIndex :: FilePath -> IO [Entry]
 readThumbsIndex = return . G.runGet (getHeader >> getListUntil getEntry) <=< BL.readFile
 
 
 main = do
   args <- getArgs
-  mapM_ (readThumbsIndex >=> mapM_ (putStrLn . uncurry f)) args
+  mapM_ (readThumbsIndex >=> mapM_ (putStrLn . f)) args
   where
-    f = \x y -> x ++ "\t" ++ y
+    f = \(u, v, w, x, y, z) -> u ++ concatMap ('\t':) [v, w, x, (show y), (show z)]
