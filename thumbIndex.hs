@@ -39,7 +39,7 @@ getHeader = ensureMagic >> G.getWord32le >>= return . fromIntegral
     ensureMagic = getConditional G.getWord32be (== 0x66664640)
 
 
-type Entry = (String, String, String, String, Int, Int)
+type Entry = (String, String, String, String, Int, String, Int, Int)
 
 
 getEntry :: G.Get Entry
@@ -47,11 +47,13 @@ getEntry = do
   path <- return . TL.unpack =<< getUtf8LazyTextNul
   b64x <- return . hexDump =<< G.getLazyByteString 8
   b64y <- return . hexDump =<< G.getLazyByteString 8
-  info <- return . hexDump =<< G.getLazyByteString 9
+  infx <- return . hexDump =<< G.getLazyByteString 4
+  tval <- return . fromIntegral =<< G.getWord8
+  infy <- return . hexDump =<< G.getLazyByteString 4
   valid <- getConditional (G.getWord8) (\x -> x == 0 || x == 1)
   idir <- return . fromIntegral =<< G.getWord32le
   if valid == 0 && idir /= -1 then fail "invalid with valid idir"
-    else return (path, b64x, b64y, info, fromIntegral valid, idir)
+    else return (path, b64x, b64y, infx, tval, infy, fromIntegral valid, idir)
 
 
 readThumbsIndex :: FilePath -> IO [Entry]
@@ -62,4 +64,4 @@ main = do
   args <- getArgs
   mapM_ (readThumbsIndex >=> mapM_ (putStrLn . f)) args
   where
-    f = \(u, v, w, x, y, z) -> u ++ concatMap ('\t':) [v, w, x, (show y), (show z)]
+    f = \(s, t, u, v, w, x, y, z) -> s ++ concatMap ('\t':) [t, u, v, show w, x, show y, show z]
