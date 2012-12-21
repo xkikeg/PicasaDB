@@ -1,4 +1,5 @@
 import Data.Word
+import Data.DateTime
 import Data.PicasaDB.Reader
 import Numeric
 import Control.Monad ((>=>), (<=<))
@@ -23,6 +24,12 @@ hexDump = foldr f "" . BL.unpack
                    | otherwise = showHex x
 
 
+fromHiResTime :: Integral a => a -> DateTime
+fromHiResTime = flip addSeconds origin . flip div 10000000 . fromIntegral
+  where
+    origin = fromGregorian 1601 1 1 0 0 0
+
+
 getListUntil :: G.Get a -> G.Get [a]
 getListUntil f = do
   empty <- G.isEmpty
@@ -39,21 +46,21 @@ getHeader = ensureMagic >> G.getWord32le >>= return . fromIntegral
     ensureMagic = getConditional G.getWord32be (== 0x66664640)
 
 
-type Entry = (String, String, String, String, Int, String, Int, Int)
+type Entry = (String, DateTime, DateTime, String, Int, String, Int, Int)
 
 
 getEntry :: G.Get Entry
 getEntry = do
   path <- return . TL.unpack =<< getUtf8LazyTextNul
-  b64x <- return . hexDump =<< G.getLazyByteString 8
-  b64y <- return . hexDump =<< G.getLazyByteString 8
+  ctime <- return . fromHiResTime =<< G.getWord64le
+  mtime <- return . fromHiResTime =<< G.getWord64le
   infx <- return . hexDump =<< G.getLazyByteString 4
   tval <- return . fromIntegral =<< G.getWord8
   infy <- return . hexDump =<< G.getLazyByteString 4
   valid <- G.getWord8
   idir <- return . fromIntegral =<< G.getWord32le
   if valid == 0 && idir /= -1 then fail "invalid with valid idir"
-    else return (path, b64x, b64y, infx, tval, infy, fromIntegral valid, idir)
+    else return (path, ctime, mtime, infx, tval, infy, fromIntegral valid, idir)
 
 
 readThumbsIndex :: FilePath -> IO [Entry]
@@ -64,4 +71,4 @@ main = do
   args <- getArgs
   mapM_ (readThumbsIndex >=> mapM_ (putStrLn . f)) args
   where
-    f = \(s, t, u, v, w, x, y, z) -> s ++ concatMap ('\t':) [t, u, v, show w, x, show y, show z]
+    f = \(s, t, u, v, w, x, y, z) -> s ++ concatMap ('\t':) [show t, show u, v, show w, x, show y, show z]
