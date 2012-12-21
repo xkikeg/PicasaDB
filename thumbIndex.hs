@@ -50,7 +50,7 @@ getEntry = do
   infx <- return . hexDump =<< G.getLazyByteString 4
   tval <- return . fromIntegral =<< G.getWord8
   infy <- return . hexDump =<< G.getLazyByteString 4
-  valid <- getConditional (G.getWord8) (\x -> x == 0 || x == 1)
+  valid <- G.getWord8
   idir <- return . fromIntegral =<< G.getWord32le
   if valid == 0 && idir /= -1 then fail "invalid with valid idir"
     else return (path, b64x, b64y, infx, tval, infy, fromIntegral valid, idir)
