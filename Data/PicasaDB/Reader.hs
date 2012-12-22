@@ -3,6 +3,7 @@ module Data.PicasaDB.Reader where
 
 import Data.PicasaDB
 
+import Numeric (showHex)
 import Data.Word
 import Data.CSV.Conduit
 import qualified Data.CSV.Conduit.Parser.Text as CSVT
@@ -11,6 +12,7 @@ import qualified Data.Binary.Get as G
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Encoding as E
+import qualified Data.DateTime as DT
 import Data.Time
 import Data.Time.Clock.POSIX
 
@@ -35,10 +37,23 @@ getCSV = do
     Right (Just res) -> return $ map TL.fromStrict res
 
 
+parseVariantTime :: Double -> UTCTime
+parseVariantTime = posixSecondsToUTCTime . realToFrac . (* 86400) . (+ (-25569))
+-- days from DT.fromGregorian 1899 12 30 0 0 0
+
+
 getVariantTime :: G.Get UTCTime
-getVariantTime = do
-  x <- getFloat64le
-  return $ posixSecondsToUTCTime (realToFrac $ (x - 25569) * 86400)
+getVariantTime = getFloat64le >>= return . parseVariantTime
+
+
+parseHiResTime :: Word64 -> UTCTime
+parseHiResTime = flip DT.addSeconds origin . flip div 10000000 . fromIntegral
+  where
+    origin = DT.fromGregorian 1601 1 1 0 0 0
+
+
+getHiResTime :: G.Get UTCTime
+getHiResTime = G.getWord64le >>= return . parseHiResTime
 
 
 getList :: (G.Get a) -> Int -> G.Get [a]
@@ -47,6 +62,16 @@ getList f n | n == 0    = return []
   x  <- f
   xs <- getList f (n - 1)
   return (x : xs)
+
+
+getListUntil :: G.Get a -> G.Get [a]
+getListUntil f = do
+  empty <- G.isEmpty
+  case empty of
+    True  -> return  []
+    False -> do
+      x <- f
+      return . (x :) =<< getListUntil f
 
 
 getPMPDB :: G.Get PMPDB
@@ -69,3 +94,35 @@ getPMPDB = do
     0x5 -> retP PMPWord16     G.getWord16le
     0x6 -> retP PMPStringList getCSV
     0x7 -> retP PMPWord32     G.getWord32le
+
+
+hexDump :: BL.ByteString -> String
+hexDump = foldr f "" . BL.unpack
+  where f = flip $ flip showHex' . (' ' :)
+        showHex' x | x < 16    = ('0' :) . showHex x
+                   | otherwise = showHex x
+
+
+getThumbIndexHeader :: G.Get Int
+getThumbIndexHeader = ensureMagic >> G.getWord32le >>= return . fromIntegral
+  where
+    ensureMagic = getConditional G.getWord32be (== 0x66664640)
+
+
+getThumbIndexEntry :: G.Get ThumbIndexEntry
+getThumbIndexEntry = do
+  path      <- return . TL.unpack     =<< getUtf8LazyTextNul
+  ctime     <- getHiResTime
+  mtime     <- getHiResTime
+  infox     <- return . hexDump       =<< G.getLazyByteString 4
+  ftype     <- return . intToFileType =<< G.getWord8
+  infoy     <- return . hexDump       =<< G.getLazyByteString 4
+  valid     <- return . fromIntegral  =<< G.getWord8
+  directory <- return . fromIntegral  =<< G.getWord32le
+  if valid == 0 && directory /= -1 then fail "invalid with valid idir"
+    else return $ ThumbIndexEntry path ctime mtime infox ftype infoy valid directory
+
+
+getThumbIndexDB :: G.Get [ThumbIndexEntry]
+getThumbIndexDB = getThumbIndexHeader >> getListUntil getThumbIndexEntry
+-- getThumbIndexDB = getThumbIndexHeader >>= getList getThumbIndexEntry
