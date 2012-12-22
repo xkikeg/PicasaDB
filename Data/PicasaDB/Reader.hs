@@ -74,6 +74,13 @@ getListUntil f = do
       return . (x :) =<< getListUntil f
 
 
+hexDump :: BL.ByteString -> String
+hexDump = foldr f "" . BL.unpack
+  where f = flip $ flip showHex' . (' ' :)
+        showHex' x | x < 16    = ('0' :) . showHex x
+                   | otherwise = showHex x
+
+
 getPMPDB :: G.Get PMPDB
 getPMPDB = do
   magic       <- getConditional G.getWord32le (== 0x3fcccccd)
@@ -94,13 +101,6 @@ getPMPDB = do
     0x5 -> retP PMPWord16     G.getWord16le
     0x6 -> retP PMPStringList getCSV
     0x7 -> retP PMPWord32     G.getWord32le
-
-
-hexDump :: BL.ByteString -> String
-hexDump = foldr f "" . BL.unpack
-  where f = flip $ flip showHex' . (' ' :)
-        showHex' x | x < 16    = ('0' :) . showHex x
-                   | otherwise = showHex x
 
 
 getThumbIndexHeader :: G.Get Int
@@ -124,5 +124,4 @@ getThumbIndexEntry = do
 
 
 getThumbIndexDB :: G.Get [ThumbIndexEntry]
-getThumbIndexDB = getThumbIndexHeader >> getListUntil getThumbIndexEntry
--- getThumbIndexDB = getThumbIndexHeader >>= getList getThumbIndexEntry
+getThumbIndexDB = getThumbIndexHeader >>= getList getThumbIndexEntry
