@@ -17,29 +17,16 @@ You should have received a copy of the GNU General Public License
 along with PicasaDB.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-import Data.Word
-import Data.DateTime
+import Control.Monad ((>=>), (<=<))
 import Data.PicasaDB
 import Data.PicasaDB.Reader
-import Control.Monad ((>=>), (<=<))
-import qualified Data.Binary.Get as G
-import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Encoding as E
+import qualified Data.Binary.Get as G
 import System.Environment (getArgs)
-import Text.Printf
 
--- x y z 
--- f = \x y -> showHex x (' ' : y)
--- f = flip g
--- g = \y x -> flip showHex (' ' : y) x
---   = flip showHex . (' ' :)
-
-readThumbsIndex :: FilePath -> IO [ThumbIndexEntry]
-readThumbsIndex = return . G.runGet (getThumbIndexDB) <=< BL.readFile
-
+readPMPDBFile :: FilePath -> IO PMPDB
+readPMPDBFile = return . G.runGet getPMPDB <=< BL.readFile
 
 main = do
   args <- getArgs
-  mapM_ (readThumbsIndex >=> mapM_ (putStrLn . showTSV)) args
+  mapM_ (readPMPDBFile >=> listPMPDB) args

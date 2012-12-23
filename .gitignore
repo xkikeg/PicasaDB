@@ -6,6 +6,6 @@ cabal-dev
 *.chs.h
 .virthualenv
 
-test
+pmpDB
 thumbIndex
 splitThumbs

@@ -3,7 +3,7 @@ GHCFLAGS := --make -O2
 
 CXXFLAGS = -Wall -Wextra -g -O3 -std=c++0x
 
-SRC := test.hs thumbIndex.hs
+SRC := pmpDB.hs thumbIndex.hs
 TGT := $(basename $(SRC))
 
 all: $(TGT) splitThumbs
