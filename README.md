@@ -21,7 +21,7 @@ First, you should prepare environment such as Haskell, C++, and Python.
 
 If you use Debian/Ubuntu, see below how to install entire packages to build.
 
-```
+```bash
 sudo aptitude install build-essential haskell-platform
 sudo aptitude install libghc-datetime-{dev,doc,prof}
 sudo aptitude install libghc-data-binary-ieee754-{dev,doc,prof}
@@ -33,7 +33,7 @@ After you have completed installation, you only have to do `make` in this direct
 ### Usage ###
 I'm very busy to prepare complete usage, so I show example commands.
 
-```
+```bash
 PICASADIR=/path/to/Picasa2/db3
 RAWOUTPUTDIR=/path/to/output
 STRUCTUREDOUTPUTDIR=/path/to/structured
