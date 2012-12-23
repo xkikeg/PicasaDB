@@ -1,6 +1,6 @@
 PicasaDB
 ==============
-Instrument Picasa DB file (with .pmp suffix)
+Instrument Picasa DB file.
 
 How to use
 --------------
