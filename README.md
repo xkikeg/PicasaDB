@@ -19,7 +19,7 @@ First, you should prepare environment such as Haskell, C++, and Python.
   * csv-conduit
 * Python 2
 
-If you use Debian/Ubuntu, see below how to install entire packages to build.
+If you use Ubuntu 12.10, all you have to do is shown below.
 
 ```bash
 sudo aptitude install build-essential haskell-platform
@@ -28,10 +28,10 @@ sudo aptitude install libghc-data-binary-ieee754-{dev,doc,prof}
 sudo aptitude install libghc-csv-conduit-{dev,doc,prof}
 ```
 
-After you have completed installation, you only have to do `make` in this directory.
+After you have completed environment preparation, you only have to do `make` in this directory.
 
 ### Usage ###
-I'm very busy to prepare complete usage, so I show example commands.
+I'm very busy to write complete usage, so I show example commands.
 
 ```bash
 PICASADIR=/path/to/Picasa2/db3
@@ -47,3 +47,7 @@ done
 License
 --------------
 This program is licensed with GPL3.
+
+Acknowledgements
+--------------------
+The pmp file parsing part of this program owe to http://sbktech.blogspot.jp/2011/12/picasa-pmp-format.html. I used two binary editors: [Moontail](http://www.vector.co.jp/soft/winnt/util/se496567.html) and [BinEdit](http://www.vector.co.jp/soft/win95/util/se042193.html).
